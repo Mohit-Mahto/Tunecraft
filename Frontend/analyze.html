@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analyze My Track — Tunecraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#08070f;--surface:#0b0a14;--card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.08);--orange:#ff6b00;--gold:#ffd700;--purple:#7c3aed;--blue:#00d4ff;--green:#00ff88;--red:#ff2d55;--text:#f0eef8;--muted:#6b6882;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;display:flex;min-height:100vh;}
+    .sidebar{width:250px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;padding:1.5rem 1rem;}
+    .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--gold),var(--purple));}
+    .logo{font-family:'Zen Dots',sans-serif;font-size:1.5rem;letter-spacing:2px;padding:.5rem;margin-bottom:2rem;position:relative;display:inline-block;}
+    .logo span{color:var(--orange);}
+    .logo::after{content:'音';position:absolute;top:-6px;right:-14px;font-size:.6rem;color:var(--gold);opacity:.7;}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem .8rem;transition:all .2s;text-decoration:none;color:var(--muted);font-size:.88rem;font-weight:700;margin-bottom:.2rem;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .nav-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+    .nav-item.active{background:rgba(255,107,0,.1);color:var(--orange);}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);box-shadow:0 0 8px var(--orange);}
+    .sidebar-bottom{margin-top:auto;}
+    .logout-btn{width:100%;padding:.5rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:700;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+    .logout-btn:hover{border-color:var(--red);color:var(--red);}
+    .main{margin-left:250px;padding:2.5rem;flex:1;}
+    .page-title{font-family:'Zen Dots',sans-serif;font-size:2rem;letter-spacing:1px;margin-bottom:.3rem;}
+    .page-title span{color:var(--orange);}
+    .page-sub{color:var(--muted);font-size:.88rem;margin-bottom:2.5rem;}
+
+    /* Drop Zone */
+    .drop-zone{border:2px dashed rgba(255,107,0,.3);padding:4rem 2rem;text-align:center;cursor:pointer;transition:all .3s;background:rgba(255,107,0,.02);margin-bottom:2rem;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px));position:relative;}
+    .drop-zone:hover,.drop-zone.dragover{border-color:var(--orange);background:rgba(255,107,0,.05);box-shadow:0 0 40px rgba(255,107,0,.1);}
+    .drop-zone.has-file{border-color:var(--green);background:rgba(0,255,136,.03);}
+    .drop-icon{font-size:3.5rem;margin-bottom:1rem;display:block;animation:float 3s ease-in-out infinite;}
+    .drop-title{font-family:'Zen Dots',sans-serif;font-size:1.3rem;letter-spacing:1px;margin-bottom:.5rem;}
+    .drop-sub{color:var(--muted);font-size:.85rem;}
+    .drop-formats{margin-top:.8rem;font-size:.75rem;color:var(--muted);letter-spacing:1px;}
+    #fileInput{display:none;}
+    .file-info{margin-top:1rem;padding:.6rem 1.2rem;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);display:inline-flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;color:var(--green);clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+
+    /* Analyze btn */
+    .analyze-btn{background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;padding:.9rem 2.5rem;font-family:'Zen Dots',sans-serif;font-size:1.1rem;letter-spacing:1px;cursor:pointer;transition:all .3s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);display:block;margin:0 auto 2rem;}
+    .analyze-btn:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(255,107,0,.5);}
+    .analyze-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+    /* Loading */
+    .loading-state{text-align:center;padding:3rem;display:none;}
+    .loading-state.show{display:block;}
+    .loading-spinner{width:60px;height:60px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1rem;}
+    .loading-text{font-family:'Zen Dots',sans-serif;font-size:1rem;color:var(--orange);letter-spacing:1px;}
+    .loading-sub{color:var(--muted);font-size:.82rem;margin-top:.5rem;}
+
+    /* Results */
+    .results{display:none;}
+    .results.show{display:block;}
+    .result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
+    .result-title{font-family:'Zen Dots',sans-serif;font-size:1.5rem;letter-spacing:1px;}
+    .result-title span{color:var(--green);}
+    .analyze-again-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.5rem 1.2rem;cursor:pointer;font-size:.82rem;font-weight:700;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);transition:all .2s;}
+    .analyze-again-btn:hover{border-color:var(--orange);color:var(--orange);}
+
+    /* Stats row */
+    .result-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+    .result-stat{background:var(--card);border:1px solid var(--border);padding:1.2rem;text-align:center;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));position:relative;}
+    .result-stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+    .result-stat:nth-child(1)::after{background:var(--orange);}
+    .result-stat:nth-child(2)::after{background:var(--purple);}
+    .result-stat:nth-child(3)::after{background:var(--blue);}
+    .result-stat:nth-child(4)::after{background:var(--green);}
+    .result-stat-val{font-family:'Zen Dots',sans-serif;font-size:1.8rem;margin-bottom:.3rem;}
+    .result-stat-val.o{color:var(--orange);}
+    .result-stat-val.p{color:var(--purple);}
+    .result-stat-val.b{color:var(--blue);}
+    .result-stat-val.g{color:var(--green);}
+    .result-stat-label{color:var(--muted);font-size:.72rem;letter-spacing:1px;text-transform:uppercase;font-weight:800;}
+
+    /* Waveform */
+    .section-card{background:var(--card);border:1px solid var(--border);padding:1.5rem;margin-bottom:1.5rem;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));}
+    .section-card-title{font-family:'Zen Dots',sans-serif;font-size:.9rem;letter-spacing:1px;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem;}
+    canvas{width:100%;height:100px;display:block;}
+
+    /* Frequency bars */
+    .freq-bars{display:flex;flex-direction:column;gap:.8rem;}
+    .freq-bar-row{display:flex;align-items:center;gap:1rem;}
+    .freq-label{font-weight:800;font-size:.82rem;width:60px;flex-shrink:0;}
+    .freq-bar-bg{flex:1;background:rgba(255,255,255,.05);height:28px;overflow:hidden;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+    .freq-bar-fill{height:100%;transition:width 1.2s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;padding-left:.6rem;font-size:.78rem;font-weight:800;color:#000;}
+    .freq-val{font-family:'Zen Dots',sans-serif;font-size:.82rem;width:45px;text-align:right;flex-shrink:0;}
+
+    /* Elements donut */
+    .elements-row{display:flex;gap:2rem;align-items:center;flex-wrap:wrap;}
+    .donut-wrap{position:relative;width:120px;height:120px;flex-shrink:0;}
+    .donut-wrap svg{transform:rotate(-90deg);}
+    .donut-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Zen Dots',sans-serif;}
+    .donut-pct{font-size:1.2rem;color:var(--gold);}
+    .donut-sub{font-size:.55rem;color:var(--muted);letter-spacing:1px;margin-top:.2rem;}
+    .elements-info{flex:1;}
+    .element-item{margin-bottom:1rem;}
+    .element-title{font-weight:900;margin-bottom:.3rem;font-size:.9rem;}
+    .element-desc{color:var(--muted);font-size:.82rem;line-height:1.5;}
+
+    /* Tips */
+    .tips-list{display:flex;flex-direction:column;gap:.8rem;}
+    .tip-item{background:rgba(255,107,0,.04);border:1px solid rgba(255,107,0,.15);padding:1rem 1.2rem;font-size:.88rem;line-height:1.6;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+
+    /* EQ Practice */
+    .eq-section{background:var(--card);border:1px solid var(--border);padding:1.5rem;margin-bottom:1.5rem;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));}
+    .eq-title{font-family:'Zen Dots',sans-serif;font-size:.9rem;letter-spacing:1px;margin-bottom:.5rem;color:var(--gold);}
+    .eq-sub{color:var(--muted);font-size:.82rem;margin-bottom:1.5rem;}
+    .eq-bands{display:flex;gap:1.5rem;align-items:flex-end;justify-content:center;flex-wrap:wrap;}
+    .eq-band{display:flex;flex-direction:column;align-items:center;gap:.6rem;}
+    .eq-fader{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:120px;height:20px;background:transparent;cursor:pointer;}
+    .eq-fader::-webkit-slider-runnable-track{background:rgba(255,255,255,.08);border-radius:1px;width:6px;}
+    .eq-fader::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:10px;border-radius:2px;}
+    .eq-fader.bass-eq::-webkit-slider-thumb{background:var(--orange);box-shadow:0 0 8px var(--orange);}
+    .eq-fader.low-mid-eq::-webkit-slider-thumb{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+    .eq-fader.mid-eq::-webkit-slider-thumb{background:var(--green);box-shadow:0 0 8px var(--green);}
+    .eq-fader.high-mid-eq::-webkit-slider-thumb{background:var(--blue);box-shadow:0 0 8px var(--blue);}
+    .eq-fader.treble-eq::-webkit-slider-thumb{background:var(--purple);box-shadow:0 0 8px var(--purple);}
+    .eq-val{font-family:'Zen Dots',sans-serif;font-size:.75rem;color:var(--orange);}
+    .eq-label{font-size:.68rem;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;text-align:center;}
+    .eq-play-btn{background:linear-gradient(135deg,var(--green),var(--blue));color:#060608;border:none;padding:.7rem 2rem;font-family:'Zen Dots',sans-serif;font-size:.9rem;cursor:pointer;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);margin-top:1rem;display:block;transition:all .3s;}
+    .eq-play-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,255,136,.4);}
+
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">Tune<span>craft</span></div>
+    <a class="nav-item" href="dashboard.html"><span>🏯</span>Dashboard</a>
+    <a class="nav-item" href="learn.html"><span>📜</span>Learning Path</a>
+    <a class="nav-item" href="practice.html"><span>🎛️</span>Training Room</a>
+    <a class="nav-item active" href="analyze.html"><span>🔬</span>Analyze Track</a>
+    <a class="nav-item" href="#"><span>⚡</span>My Power Level</a>
+    <div class="sidebar-bottom"><button class="logout-btn" onclick="logout()">⚡ Log Out</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="page-title">🔬 Analyze <span>My Track</span></div>
+    <div class="page-sub">Drop any song and unlock its secrets — BPM, frequency breakdown, energy analysis and more!</div>
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <span class="drop-icon">🎵</span>
+      <div class="drop-title">Drop Your Track Here</div>
+      <div class="drop-sub">Or click to browse your files</div>
+      <div class="drop-formats">Supports MP3 and WAV</div>
+      <div class="file-info" id="fileInfo" style="display:none">✅ <span id="fileName"></span></div>
+    </div>
+    <input type="file" id="fileInput" accept=".mp3,.wav" onchange="handleFileSelect(event)"/>
+
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeTrack()" disabled>⚡ ANALYZE TRACK</button>
+
+    <!-- Loading -->
+    <div class="loading-state" id="loadingState">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Analyzing Your Track...</div>
+      <div class="loading-sub">Reading frequencies, detecting BPM, analyzing energy patterns...</div>
+    </div>
+
+    <!-- Results -->
+    <div class="results" id="results">
+      <div class="result-header">
+        <div class="result-title">Analysis <span>Complete</span> ⚡</div>
+        <button class="analyze-again-btn" onclick="resetAnalyzer()">🔄 Analyze Another</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="result-stats">
+        <div class="result-stat"><div class="result-stat-val o" id="resBPM">—</div><div class="result-stat-label">BPM</div></div>
+        <div class="result-stat"><div class="result-stat-val p" id="resDuration">—</div><div class="result-stat-label">Duration</div></div>
+        <div class="result-stat"><div class="result-stat-val b" id="resCentroid">—</div><div class="result-stat-label">Brightness</div></div>
+        <div class="result-stat"><div class="result-stat-val g" id="resDominant">—</div><div class="result-stat-label">Dominant</div></div>
+      </div>
+
+      <!-- Waveform -->
+      <div class="section-card">
+        <div class="section-card-title">📊 Waveform</div>
+        <canvas id="waveformCanvas" height="100"></canvas>
+      </div>
+
+      <!-- Energy Over Time -->
+      <div class="section-card">
+        <div class="section-card-title">⚡ Energy Over Time</div>
+        <canvas id="energyCanvas" height="80"></canvas>
+      </div>
+
+      <!-- Frequency -->
+      <div class="section-card">
+        <div class="section-card-title">🎚️ Frequency Breakdown</div>
+        <div class="freq-bars">
+          <div class="freq-bar-row">
+            <div class="freq-label" style="color:var(--orange)">Bass</div>
+            <div class="freq-bar-bg"><div class="freq-bar-fill" id="bassBar" style="width:0%;background:linear-gradient(90deg,var(--orange),var(--gold))">—</div></div>
+            <div class="freq-val" id="bassVal" style="color:var(--orange)">—</div>
+          </div>
+          <div class="freq-bar-row">
+            <div class="freq-label" style="color:var(--green)">Mid</div>
+            <div class="freq-bar-bg"><div class="freq-bar-fill" id="midBar" style="width:0%;background:linear-gradient(90deg,var(--green),var(--blue))">—</div></div>
+            <div class="freq-val" id="midVal" style="color:var(--green)">—</div>
+          </div>
+          <div class="freq-bar-row">
+            <div class="freq-label" style="color:var(--purple)">Treble</div>
+            <div class="freq-bar-bg"><div class="freq-bar-fill" id="trebleBar" style="width:0%;background:linear-gradient(90deg,var(--purple),var(--blue))">—</div></div>
+            <div class="freq-val" id="trebleVal" style="color:var(--purple)">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Elements -->
+      <div class="section-card">
+        <div class="section-card-title">🎭 Track Elements</div>
+        <div class="elements-row">
+          <div class="donut-wrap">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="12" stroke-dasharray="314" stroke-dashoffset="314" id="donutCircle" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-label"><div class="donut-pct" id="harmonicPct">—%</div><div class="donut-sub">MELODIC</div></div>
+          </div>
+          <div class="elements-info">
+            <div class="element-item">
+              <div class="element-title" style="color:var(--gold)">🎹 Harmonic (Melodic) — <span id="harmonicVal">—</span>%</div>
+              <div class="element-desc">Chords, melodies, synths, and tonal elements. The musical DNA of the track.</div>
+            </div>
+            <div class="element-item">
+              <div class="element-title" style="color:var(--orange)">🥁 Percussive (Rhythmic) — <span id="percussiveVal">—</span>%</div>
+              <div class="element-desc">Drums, beats, hits, and rhythmic elements. The heartbeat of the track.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Beginner Tips -->
+      <div class="section-card">
+        <div class="section-card-title">💡 What You're Hearing — Beginner Tips</div>
+        <div class="tips-list" id="tipsList"></div>
+      </div>
+
+      <!-- EQ Practice -->
+      <div class="eq-section">
+        <div class="eq-title">🎛️ Practice EQ on This Track</div>
+        <div class="eq-sub">Adjust the equalizer bands below and hear how they change the sound. This is how producers shape music!</div>
+        <div class="eq-bands">
+          <div class="eq-band">
+            <input type="range" class="eq-fader bass-eq" orient="vertical" min="-12" max="12" value="0" oninput="updateEQ('sub-bass',this.value)"/>
+            <div class="eq-val" id="eq-sub-bass">0dB</div>
+            <div class="eq-label">Sub Bass<br>60Hz</div>
+          </div>
+          <div class="eq-band">
+            <input type="range" class="eq-fader low-mid-eq" orient="vertical" min="-12" max="12" value="0" oninput="updateEQ('bass',this.value)"/>
+            <div class="eq-val" id="eq-bass">0dB</div>
+            <div class="eq-label">Bass<br>250Hz</div>
+          </div>
+          <div class="eq-band">
+            <input type="range" class="eq-fader mid-eq" orient="vertical" min="-12" max="12" value="0" oninput="updateEQ('mid',this.value)"/>
+            <div class="eq-val" id="eq-mid">0dB</div>
+            <div class="eq-label">Mid<br>1kHz</div>
+          </div>
+          <div class="eq-band">
+            <input type="range" class="eq-fader high-mid-eq" orient="vertical" min="-12" max="12" value="0" oninput="updateEQ('high-mid',this.value)"/>
+            <div class="eq-val" id="eq-high-mid">0dB</div>
+            <div class="eq-label">Hi Mid<br>4kHz</div>
+          </div>
+          <div class="eq-band">
+            <input type="range" class="eq-fader treble-eq" orient="vertical" min="-12" max="12" value="0" oninput="updateEQ('treble',this.value)"/>
+            <div class="eq-val" id="eq-treble">0dB</div>
+            <div class="eq-label">Treble<br>12kHz</div>
+          </div>
+        </div>
+        <button class="eq-play-btn" id="eqPlayBtn" onclick="toggleEQPlay()">▶ Play with EQ</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API='http://127.0.0.1:8000';
+    const token=localStorage.getItem('tc_token');
+    if(!token)window.location.href='login.html';
+
+    let selectedFile=null;
+    let audioCtx=null, sourceNode=null, eqNodes={}, isPlaying=false;
+    let audioBuffer=null;
+
+    // Drag & Drop
+    function handleDragOver(e){e.preventDefault();document.getElementById('dropZone').classList.add('dragover');}
+    function handleDragLeave(){document.getElementById('dropZone').classList.remove('dragover');}
+    function handleDrop(e){e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)setFile(f);}
+    function handleFileSelect(e){const f=e.target.files[0];if(f)setFile(f);}
+
+    function setFile(f){
+      if(!f.name.match(/\.(mp3|wav)$/i)){alert('Please upload an MP3 or WAV file!');return;}
+      selectedFile=f;
+      const dz=document.getElementById('dropZone');
+      dz.classList.add('has-file');
+      document.getElementById('fileInfo').style.display='inline-flex';
+      document.getElementById('fileName').textContent=f.name+' ('+Math.round(f.size/1024/1024*10)/10+' MB)';
+      document.getElementById('analyzeBtn').disabled=false;
+    }
+
+    async function analyzeTrack(){
+      if(!selectedFile)return;
+      document.getElementById('analyzeBtn').style.display='none';
+      document.getElementById('dropZone').style.display='none';
+      document.getElementById('loadingState').classList.add('show');
+      document.getElementById('results').classList.remove('show');
+
+      try{
+        const formData=new FormData();
+        formData.append('file',selectedFile);
+        const res=await fetch(`${API}/api/analyze/track`,{
+          method:'POST',
+          headers:{'Authorization':`Bearer ${token}`},
+          body:formData
+        });
+        const data=await res.json();
+        if(!data.success){throw new Error(data.error||'Analysis failed');}
+        displayResults(data);
+
+        // Setup EQ audio
+        setupEQAudio();
+      }catch(e){
+        alert('Analysis failed: '+e.message);
+        resetAnalyzer();
+      }finally{
+        document.getElementById('loadingState').classList.remove('show');
+      }
+    }
+
+    function displayResults(data){
+      document.getElementById('results').classList.add('show');
+
+      // Stats
+      document.getElementById('resBPM').textContent=data.bpm;
+      document.getElementById('resDuration').textContent=formatDuration(data.duration);
+      document.getElementById('resCentroid').textContent=Math.round(data.spectral_centroid)+'Hz';
+      const dom=data.frequency.bass>data.frequency.mid&&data.frequency.bass>data.frequency.treble?'Bass':data.frequency.mid>data.frequency.treble?'Mid':'Treble';
+      document.getElementById('resDominant').textContent=dom;
+
+      // Waveform
+      drawWaveform(data.waveform);
+      drawEnergy(data.rms_energy);
+
+      // Frequency bars
+      setTimeout(()=>{
+        document.getElementById('bassBar').style.width=data.frequency.bass+'%';
+        document.getElementById('bassBar').textContent=data.frequency.bass+'%';
+        document.getElementById('bassVal').textContent=data.frequency.bass+'%';
+        document.getElementById('midBar').style.width=data.frequency.mid+'%';
+        document.getElementById('midBar').textContent=data.frequency.mid+'%';
+        document.getElementById('midVal').textContent=data.frequency.mid+'%';
+        document.getElementById('trebleBar').style.width=data.frequency.treble+'%';
+        document.getElementById('trebleBar').textContent=data.frequency.treble+'%';
+        document.getElementById('trebleVal').textContent=data.frequency.treble+'%';
+      },200);
+
+      // Donut
+      const h=data.elements.harmonic;
+      document.getElementById('harmonicPct').textContent=h+'%';
+      document.getElementById('harmonicVal').textContent=h;
+      document.getElementById('percussiveVal').textContent=data.elements.percussive;
+      setTimeout(()=>{
+        const circumference=314;
+        const offset=circumference-(h/100*circumference);
+        document.getElementById('donutCircle').style.strokeDashoffset=offset;
+        document.getElementById('donutCircle').style.transition='stroke-dashoffset 1.5s ease';
+      },300);
+
+      // Tips
+      const tipsList=document.getElementById('tipsList');
+      tipsList.innerHTML=data.tips.map(t=>`<div class="tip-item">${t}</div>`).join('');
+    }
+
+    function drawWaveform(data){
+      const canvas=document.getElementById('waveformCanvas');
+      const ctx=canvas.getContext('2d');
+      canvas.width=canvas.offsetWidth*window.devicePixelRatio;
+      canvas.height=100*window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
+      const w=canvas.offsetWidth,h=50;
+      ctx.clearRect(0,0,w,h*2);
+      const step=w/data.length;
+      const gradient=ctx.createLinearGradient(0,0,w,0);
+      gradient.addColorStop(0,'#ff6b00');
+      gradient.addColorStop(.5,'#ffd700');
+      gradient.addColorStop(1,'#7c3aed');
+      ctx.strokeStyle=gradient;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      data.forEach((v,i)=>{
+        const x=i*step;
+        const y=h+(v*h*3);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    }
+
+    function drawEnergy(data){
+      const canvas=document.getElementById('energyCanvas');
+      const ctx=canvas.getContext('2d');
+      canvas.width=canvas.offsetWidth*window.devicePixelRatio;
+      canvas.height=80*window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
+      const w=canvas.offsetWidth,h=80;
+      const max=Math.max(...data)||1;
+      const gradient=ctx.createLinearGradient(0,h,0,0);
+      gradient.addColorStop(0,'rgba(255,107,0,0.8)');
+      gradient.addColorStop(1,'rgba(255,45,85,0.3)');
+      ctx.fillStyle=gradient;
+      const bw=w/data.length-1;
+      data.forEach((v,i)=>{
+        const bh=(v/max)*(h-10);
+        ctx.fillRect(i*(bw+1),h-bh,bw,bh);
+      });
+    }
+
+    function formatDuration(s){const m=Math.floor(s/60);return m+'m '+Math.round(s%60)+'s';}
+
+    function setupEQAudio(){
+      const reader=new FileReader();
+      reader.onload=async(e)=>{
+        try{
+          if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+          audioBuffer=await audioCtx.decodeAudioData(e.target.result);
+          // Create EQ filter chain
+          const freqs={
+            'sub-bass':60,'bass':250,'mid':1000,'high-mid':4000,'treble':12000
+          };
+          Object.entries(freqs).forEach(([id,freq])=>{
+            const f=audioCtx.createBiquadFilter();
+            f.type='peaking';f.frequency.value=freq;f.Q.value=1;f.gain.value=0;
+            eqNodes[id]=f;
+          });
+        }catch(e){console.log('Audio setup error:',e);}
+      };
+      reader.readAsArrayBuffer(selectedFile);
+    }
+
+    function updateEQ(band,val){
+      document.getElementById('eq-'+band).textContent=(val>0?'+':'')+val+'dB';
+      if(eqNodes[band])eqNodes[band].gain.value=parseFloat(val);
+    }
+
+    function toggleEQPlay(){
+      if(!audioBuffer){alert('Audio not ready yet, please wait a moment.');return;}
+      const btn=document.getElementById('eqPlayBtn');
+      if(isPlaying){
+        if(sourceNode){sourceNode.stop();sourceNode=null;}
+        isPlaying=false;btn.textContent='▶ Play with EQ';
+        return;
+      }
+      sourceNode=audioCtx.createBufferSource();
+      sourceNode.buffer=audioBuffer;
+      // Chain EQ nodes
+      const chain=Object.values(eqNodes);
+      sourceNode.connect(chain[0]);
+      chain.forEach((n,i)=>{if(i<chain.length-1)n.connect(chain[i+1]);});
+      chain[chain.length-1].connect(audioCtx.destination);
+      sourceNode.start();
+      isPlaying=true;btn.textContent='⏹ Stop';
+      sourceNode.onended=()=>{isPlaying=false;btn.textContent='▶ Play with EQ';};
+    }
+
+    function resetAnalyzer(){
+      selectedFile=null;
+      if(sourceNode){try{sourceNode.stop();}catch(e){}}
+      isPlaying=false;
+      document.getElementById('dropZone').style.display='block';
+      document.getElementById('dropZone').classList.remove('has-file');
+      document.getElementById('fileInfo').style.display='none';
+      document.getElementById('analyzeBtn').style.display='block';
+      document.getElementById('analyzeBtn').disabled=true;
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('fileInput').value='';
+    }
+
+    function logout(){localStorage.removeItem('tc_token');localStorage.removeItem('tc_user');window.location.href='login.html';}
+  </script>
+</body>
+</html>

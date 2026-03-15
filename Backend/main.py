@@ -12,15 +12,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 import models
-from routers import users, courses, progress
+from routers import users, courses, progress, analyze
 from seed import seed_data
 
-# Create all tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Tunecraft API", version="1.0.0")
 
-# CORS — allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,16 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(users.router)
 app.include_router(courses.router)
 app.include_router(progress.router)
-
+app.include_router(analyze.router)
 
 @app.get("/")
 def root():
     return {"message": "Welcome to Tunecraft API 🎵"}
-
 
 @app.on_event("startup")
 def on_startup():
