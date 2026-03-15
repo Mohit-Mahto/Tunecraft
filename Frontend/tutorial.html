@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lesson — Tunecraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#08070f;--surface:#0b0a14;--card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.08);--orange:#ff6b00;--gold:#ffd700;--purple:#7c3aed;--blue:#00d4ff;--green:#00ff88;--text:#f0eef8;--muted:#6b6882;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;display:flex;min-height:100vh;}
+    .sidebar{width:250px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;padding:1.5rem 1rem;}
+    .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--gold),var(--purple));}
+    .logo{font-family:'Zen Dots',sans-serif;font-size:1.5rem;letter-spacing:2px;padding:.5rem;margin-bottom:2rem;position:relative;display:inline-block;}
+    .logo span{color:var(--orange);}
+    .logo::after{content:'音';position:absolute;top:-6px;right:-14px;font-size:.6rem;color:var(--gold);opacity:.7;}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem .8rem;transition:all .2s;text-decoration:none;color:var(--muted);font-size:.88rem;font-weight:700;margin-bottom:.2rem;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .nav-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+    .nav-item.active{background:rgba(255,107,0,.1);color:var(--orange);}
+    .sidebar-bottom{margin-top:auto;}
+    .logout-btn{width:100%;padding:.5rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:700;transition:all .2s;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+    .logout-btn:hover{border-color:#ff2d55;color:#ff2d55;}
+    .main{margin-left:250px;padding:2.5rem;flex:1;max-width:1000px;}
+    .breadcrumb{color:var(--muted);font-size:.82rem;margin-bottom:1.5rem;}
+    .breadcrumb a{color:var(--orange);text-decoration:none;font-weight:700;}
+    .lesson-title{font-family:'Zen Dots',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:.5rem;line-height:1.2;}
+    .lesson-meta{color:var(--muted);font-size:.85rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem;}
+    .meta-badge{background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.2);color:var(--orange);padding:.2rem .7rem;font-size:.72rem;font-weight:800;letter-spacing:1px;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+    .video-container{border-radius:0;overflow:hidden;aspect-ratio:16/9;margin-bottom:2rem;border:1px solid var(--border);position:relative;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px));}
+    .video-container::before{content:'';position:absolute;inset:0;border:2px solid transparent;background:linear-gradient(135deg,var(--orange),transparent,var(--purple)) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;z-index:1;}
+    .video-container iframe{width:100%;height:100%;border:none;}
+    .lesson-desc{background:var(--card);border:1px solid var(--border);padding:1.5rem;margin-bottom:2rem;line-height:1.8;color:var(--muted);clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));}
+    .complete-btn{background:linear-gradient(135deg,var(--green),var(--blue));color:#060608;border:none;padding:.85rem 2rem;font-family:'Zen Dots',sans-serif;font-size:1rem;letter-spacing:1px;cursor:pointer;transition:all .3s;margin-bottom:2rem;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+    .complete-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,255,136,.4);}
+    .complete-btn.done{background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.3);cursor:default;transform:none;box-shadow:none;}
+    .nav-btns{display:flex;gap:1rem;}
+    .nav-btn{flex:1;padding:.8rem;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:700;transition:all .2s;text-decoration:none;text-align:center;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .nav-btn:hover{border-color:var(--orange);color:var(--orange);}
+    .nav-btn:disabled{opacity:.4;cursor:default;}
+    .loading{color:var(--muted);text-align:center;padding:3rem;}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">Tune<span>craft</span></div>
+    <a class="nav-item" href="dashboard.html"><span>🏯</span>Dashboard</a>
+    <a class="nav-item active" href="learn.html"><span>📜</span>Learning Path</a>
+    <a class="nav-item" href="practice.html"><span>🎛️</span>Training Room</a>
+    <a class="nav-item" href="#"><span>⚡</span>My Power Level</a>
+    <div class="sidebar-bottom"><button class="logout-btn" onclick="logout()">⚡ Log Out</button></div>
+  </aside>
+  <main class="main" id="mainContent"><div class="loading">Loading lesson...</div></main>
+  <script>
+    const API='http://127.0.0.1:8000';
+    const token=localStorage.getItem('tc_token');
+    const user=JSON.parse(localStorage.getItem('tc_user')||'{}');
+    const lang=user.preferred_language||'en';
+    if(!token)window.location.href='login.html';
+    const params=new URLSearchParams(window.location.search);
+    const courseId=params.get('course'),lessonId=params.get('lesson');
+    async function authFetch(url,opts={}){const res=await fetch(API+url,{...opts,headers:{'Authorization':`Bearer ${token}`,...(opts.headers||{})}});if(res.status===401){logout();return null;}return res.json();}
+    async function markComplete(){
+      const btn=document.getElementById('completeBtn');
+      btn.textContent='Saving...';
+      await authFetch('/api/progress/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lesson_id:parseInt(lessonId)})});
+      btn.textContent='✅ Mission Complete!';btn.classList.add('done');
+    }
+    async function loadLesson(){
+      if(!courseId||!lessonId){window.location.href='learn.html';return;}
+      const[course,lesson]=await Promise.all([authFetch(`/api/courses/${courseId}`),authFetch(`/api/courses/${courseId}/lessons/${lessonId}`)]);
+      if(!lesson)return;
+      const title=lang==='hi'&&lesson.title_hi?lesson.title_hi:lesson.title;
+      const desc=lang==='hi'&&lesson.description_hi?lesson.description_hi:(lesson.description||'');
+      const courseTitle=lang==='hi'&&course.title_hi?course.title_hi:course.title;
+      const lessons=course.lessons.sort((a,b)=>a.order-b.order);
+      const idx=lessons.findIndex(l=>l.id==lessonId);
+      const prev=idx>0?lessons[idx-1]:null;
+      const next=idx<lessons.length-1?lessons[idx+1]:null;
+      document.title=`${title} — Tunecraft`;
+      document.getElementById('mainContent').innerHTML=`
+        <div class="breadcrumb"><a href="learn.html">Training Scrolls</a> → ${courseTitle} → ${title}</div>
+        <h1 class="lesson-title">${title}</h1>
+        <div class="lesson-meta"><span class="meta-badge">⏱ ${lesson.duration_minutes} min</span><span class="meta-badge">📜 ${courseTitle}</span></div>
+        ${lesson.video_url?`<div class="video-container"><iframe src="${lesson.video_url}" allowfullscreen></iframe></div>`:''}
+        ${desc?`<div class="lesson-desc">${desc}</div>`:''}
+        <button class="complete-btn" id="completeBtn" onclick="markComplete()">⚔ Mark Mission Complete</button>
+        <div class="nav-btns">
+          ${prev?`<a class="nav-btn" href="tutorial.html?course=${courseId}&lesson=${prev.id}">← Previous</a>`:`<button class="nav-btn" disabled>← Previous</button>`}
+          ${next?`<a class="nav-btn" href="tutorial.html?course=${courseId}&lesson=${next.id}">Next Mission →</a>`:`<a class="nav-btn" href="learn.html">Back to Scrolls →</a>`}
+        </div>`;
+    }
+    function logout(){localStorage.removeItem('tc_token');localStorage.removeItem('tc_user');window.location.href='login.html';}
+    loadLesson();
+  </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up — Tunecraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#08070f;--card:#0e0c1a;--border:rgba(255,255,255,0.08);--orange:#ff6b00;--gold:#ffd700;--purple:#7c3aed;--blue:#00d4ff;--text:#f0eef8;--muted:#6b6882;--error:#ff2d55;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;display:flex;overflow:hidden;}
+    .cursor{position:fixed;width:12px;height:12px;background:var(--purple);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+    .cursor-ring{position:fixed;width:34px;height:34px;border:2px solid rgba(124,58,237,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);}
+
+    .left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:3rem;position:relative;overflow:hidden;}
+    canvas{position:absolute;inset:0;z-index:0;}
+    .left-content{position:relative;z-index:1;width:100%;max-width:420px;}
+    .logo{font-family:'Zen Dots',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:3rem;position:relative;display:inline-block;}
+    .logo span{color:var(--orange);}
+    .logo::after{content:'音';position:absolute;top:-8px;right:-18px;font-size:.65rem;color:var(--gold);opacity:.7;}
+    .big-title{font-family:'Zen Dots',sans-serif;font-size:clamp(2.5rem,5vw,4rem);line-height:.95;margin-bottom:1.5rem;}
+    .big-title .t1{color:var(--purple);text-shadow:0 0 30px rgba(124,58,237,.6);}
+    .big-title .t2{color:var(--gold);text-shadow:0 0 30px rgba(255,215,0,.4);}
+    .left-sub{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:340px;margin-bottom:2rem;}
+    .rank-cards{display:flex;gap:.8rem;flex-wrap:wrap;}
+    .rank-card{background:rgba(255,255,255,.03);border:1px solid var(--border);padding:.5rem .9rem;font-size:.75rem;font-weight:800;letter-spacing:1px;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .rank-card.g{color:var(--muted);border-color:rgba(107,104,130,.2);}
+    .rank-card.s{color:#c0c0ff;border-color:rgba(192,192,255,.2);}
+    .rank-card.gold{color:var(--gold);border-color:rgba(255,215,0,.3);}
+    .rank-card.k{color:var(--orange);border-color:rgba(255,107,0,.4);box-shadow:0 0 15px rgba(255,107,0,.2);}
+
+    .right{width:480px;background:var(--card);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;padding:3rem;position:relative;overflow-y:auto;}
+    .right::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--purple),var(--blue),var(--orange),var(--gold));}
+    .form-title{font-family:'Zen Dots',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:.3rem;}
+    .form-sub{color:var(--muted);font-size:.85rem;margin-bottom:1.8rem;}
+    .form-group{margin-bottom:1rem;}
+    .form-group label{display:block;font-size:.72rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.45rem;}
+    .input-wrap{position:relative;}
+    .input-wrap input,.input-wrap select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem .75rem 2.8rem;font-family:'Nunito',sans-serif;font-size:.92rem;transition:all .3s;outline:none;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .input-wrap input:focus,.input-wrap select:focus{border-color:var(--purple);background:rgba(124,58,237,.04);box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+    .input-wrap input::placeholder{color:var(--muted);}
+    .input-wrap select option{background:var(--card);}
+    .input-icon{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none;}
+    .btn-submit{width:100%;background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;border:none;padding:.9rem;font-family:'Zen Dots',sans-serif;font-size:1.1rem;letter-spacing:1px;cursor:pointer;transition:all .3s;margin-top:.5rem;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);position:relative;overflow:hidden;}
+    .btn-submit:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(124,58,237,.5);}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;}
+    .auth-switch{text-align:center;margin-top:1.2rem;font-size:.88rem;color:var(--muted);}
+    .auth-switch a{color:var(--purple);text-decoration:none;font-weight:800;}
+    .error-msg{background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.25);color:var(--error);padding:.7rem 1rem;font-size:.85rem;margin-bottom:1rem;display:none;align-items:center;gap:.5rem;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .error-msg.show{display:flex;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    .left-content>*{animation:fadeUp .6s ease both;}
+    .left-content>*:nth-child(1){animation-delay:.1s;}.left-content>*:nth-child(2){animation-delay:.25s;}.left-content>*:nth-child(3){animation-delay:.4s;}.left-content>*:nth-child(4){animation-delay:.55s;}
+    @media(max-width:768px){.left{display:none;}.right{width:100%;padding:2rem;}}
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <div class="left">
+    <canvas id="leftCanvas"></canvas>
+    <div class="left-content">
+      <div class="logo">Tune<span>craft</span></div>
+      <div class="big-title"><div class="t1">BEGIN</div><div class="t2">TRAINING</div></div>
+      <p class="left-sub">Every great producer started as a beginner. Your arc starts here. Train hard, level up, and forge your own sound.</p>
+      <div class="rank-cards">
+        <div class="rank-card g">🍃 Genin</div>
+        <div class="rank-card s">⚔ Chunin</div>
+        <div class="rank-card gold">🌟 Jonin</div>
+        <div class="rank-card k">👑 Kage</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="form-title">Create Account</div>
+    <div class="form-sub">Start your music production training — it's free</div>
+    <div class="error-msg" id="errorMsg">⚠️ <span id="errorText"></span></div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <div class="input-wrap"><span class="input-icon">👤</span><input type="text" id="fullName" placeholder="Naruto Uzumaki"/></div>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <div class="input-wrap"><span class="input-icon">⚡</span><input type="text" id="username" placeholder="naruto_beats"/></div>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <div class="input-wrap"><span class="input-icon">📧</span><input type="email" id="email" placeholder="naruto@hidden-leaf.com"/></div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrap"><span class="input-icon">🔒</span><input type="password" id="password" placeholder="Min. 6 characters"/></div>
+    </div>
+    <div class="form-group">
+      <label>Language</label>
+      <div class="input-wrap"><span class="input-icon">🌐</span>
+        <select id="language"><option value="en">English</option><option value="hi">हिंदी (Hindi)</option></select>
+      </div>
+    </div>
+    <button class="btn-submit" id="regBtn" onclick="handleRegister()">⚡ BEGIN TRAINING</button>
+    <div class="auth-switch">Already a shinobi? <a href="login.html">Log in →</a></div>
+  </div>
+
+  <script>
+    const API='http://127.0.0.1:8000';
+    const cur=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+    (function a(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+    const cv=document.getElementById('leftCanvas'),cx=cv.getContext('2d');
+    function resize(){cv.width=cv.parentElement.offsetWidth;cv.height=cv.parentElement.offsetHeight;}
+    resize();window.addEventListener('resize',resize);
+    const cols=['124,58,237','0,212,255','255,107,0','255,215,0'];
+    class P{constructor(){this.reset();}reset(){this.x=Math.random()*cv.width;this.y=Math.random()*cv.height;this.size=Math.random()*2+.5;this.vx=(Math.random()-.5)*.4;this.vy=(Math.random()-.5)*.4;this.alpha=Math.random()*.25+.05;this.col=cols[Math.floor(Math.random()*cols.length)];}update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>cv.width||this.y<0||this.y>cv.height)this.reset();}draw(){cx.beginPath();cx.arc(this.x,this.y,this.size,0,Math.PI*2);cx.fillStyle=`rgba(${this.col},${this.alpha})`;cx.fill();}}
+    const ps=[];for(let i=0;i<80;i++)ps.push(new P());
+    (function ap(){cx.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.update();p.draw();});requestAnimationFrame(ap);})();
+
+    async function handleRegister(){
+      const fullName=document.getElementById('fullName').value.trim();
+      const username=document.getElementById('username').value.trim();
+      const email=document.getElementById('email').value.trim();
+      const password=document.getElementById('password').value;
+      const language=document.getElementById('language').value;
+      const btn=document.getElementById('regBtn');
+      if(!username||!email||!password){showError('Please fill in all required fields.');return;}
+      if(password.length<6){showError('Password must be at least 6 characters.');return;}
+      btn.disabled=true;btn.textContent='LOADING...';hideError();
+      try{
+        const res=await fetch(`${API}/api/users/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password,full_name:fullName,preferred_language:language})});
+        const data=await res.json();
+        if(!res.ok){showError(data.detail||'Registration failed');return;}
+        localStorage.setItem('tc_token',data.access_token);
+        localStorage.setItem('tc_user',JSON.stringify(data.user));
+        window.location.href='dashboard.html';
+      }catch(e){showError('Could not connect to server. Make sure the backend is running.');}
+      finally{btn.disabled=false;btn.textContent='⚡ BEGIN TRAINING';}
+    }
+    function showError(msg){const e=document.getElementById('errorMsg');document.getElementById('errorText').textContent=msg;e.classList.add('show');}
+    function hideError(){document.getElementById('errorMsg').classList.remove('show');}
+  </script>
+</body>
+</html>

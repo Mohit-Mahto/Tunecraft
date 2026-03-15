@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Learning Path — Tunecraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#08070f;--surface:#0b0a14;--card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.08);--orange:#ff6b00;--gold:#ffd700;--purple:#7c3aed;--blue:#00d4ff;--green:#00ff88;--text:#f0eef8;--muted:#6b6882;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;display:flex;min-height:100vh;}
+    .sidebar{width:250px;background:var(--surface);border-right:1px solid var(--border);height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;padding:1.5rem 1rem;overflow:hidden;}
+    .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--gold),var(--purple));}
+    .logo{font-family:'Zen Dots',sans-serif;font-size:1.5rem;letter-spacing:2px;padding:.5rem;margin-bottom:2rem;position:relative;display:inline-block;}
+    .logo span{color:var(--orange);}
+    .logo::after{content:'音';position:absolute;top:-6px;right:-14px;font-size:.6rem;color:var(--gold);opacity:.7;}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem .8rem;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--muted);font-size:.88rem;font-weight:700;margin-bottom:.2rem;position:relative;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .nav-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+    .nav-item.active{background:rgba(255,107,0,.1);color:var(--orange);}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);box-shadow:0 0 8px var(--orange);}
+    .sidebar-bottom{margin-top:auto;}
+    .logout-btn{width:100%;padding:.5rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:700;transition:all .2s;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+    .logout-btn:hover{border-color:#ff2d55;color:#ff2d55;}
+    .main{margin-left:250px;padding:2.5rem;flex:1;}
+    .page-title{font-family:'Zen Dots',sans-serif;font-size:2rem;letter-spacing:1px;margin-bottom:.3rem;}
+    .page-title span{color:var(--orange);}
+    .page-sub{color:var(--muted);font-size:.88rem;margin-bottom:3rem;}
+    .course-section{margin-bottom:3rem;}
+    .course-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+    .course-badge{background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.3);color:var(--orange);padding:.3rem .9rem;font-size:.7rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+    .course-title{font-family:'Zen Dots',sans-serif;font-size:1.1rem;letter-spacing:1px;}
+    .lessons-list{display:flex;flex-direction:column;gap:.6rem;}
+    .lesson-item{background:var(--card);border:1px solid var(--border);padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;cursor:pointer;transition:all .25s;text-decoration:none;color:inherit;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));}
+    .lesson-item:hover{border-color:rgba(255,107,0,.35);transform:translateX(6px);background:rgba(255,107,0,.03);}
+    .lesson-num{font-family:'Zen Dots',sans-serif;font-size:1.1rem;color:rgba(255,215,0,.2);flex-shrink:0;width:36px;}
+    .lesson-info{flex:1;}
+    .lesson-name{font-weight:800;font-size:.9rem;margin-bottom:.2rem;}
+    .lesson-meta{color:var(--muted);font-size:.75rem;}
+    .lesson-arrow{color:var(--orange);font-size:1rem;}
+    .loading{color:var(--muted);text-align:center;padding:3rem;}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">Tune<span>craft</span></div>
+    <a class="nav-item" href="dashboard.html"><span>🏯</span>Dashboard</a>
+    <a class="nav-item active" href="learn.html"><span>📜</span>Learning Path</a>
+    <a class="nav-item" href="practice.html"><span>🎛️</span>Training Room</a>
+    <a class="nav-item" href="#"><span>⚡</span>My Power Level</a>
+    <div class="sidebar-bottom"><button class="logout-btn" onclick="logout()">⚡ Log Out</button></div>
+  </aside>
+  <main class="main">
+    <div class="page-title">📜 Training <span>Scrolls</span></div>
+    <div class="page-sub">Master each scroll to level up your music production power</div>
+    <div id="coursesList"><div class="loading">Loading your scrolls...</div></div>
+  </main>
+  <script>
+    const API='http://127.0.0.1:8000';
+    const token=localStorage.getItem('tc_token');
+    const user=JSON.parse(localStorage.getItem('tc_user')||'{}');
+    const lang=user.preferred_language||'en';
+    if(!token)window.location.href='login.html';
+    async function authFetch(url){const res=await fetch(API+url,{headers:{'Authorization':`Bearer ${token}`}});if(res.status===401){logout();return null;}return res.json();}
+    async function loadCourses(){
+      const courses=await authFetch('/api/courses/');
+      if(!courses)return;
+      const container=document.getElementById('coursesList');
+      container.innerHTML=courses.map((course,ci)=>`
+        <div class="course-section">
+          <div class="course-header">
+            <span class="course-badge">Arc ${ci+1}</span>
+            <span class="course-title">${lang==='hi'&&course.title_hi?course.title_hi:course.title}</span>
+          </div>
+          <div class="lessons-list">
+            ${course.lessons.sort((a,b)=>a.order-b.order).map((lesson,li)=>`
+              <a class="lesson-item" href="tutorial.html?course=${course.id}&lesson=${lesson.id}">
+                <div class="lesson-num">${String(li+1).padStart(2,'0')}</div>
+                <div class="lesson-info">
+                  <div class="lesson-name">${lang==='hi'&&lesson.title_hi?lesson.title_hi:lesson.title}</div>
+                  <div class="lesson-meta">⏱ ${lesson.duration_minutes} min</div>
+                </div>
+                <div class="lesson-arrow">→</div>
+              </a>`).join('')}
+          </div>
+        </div>`).join('');
+    }
+    function logout(){localStorage.removeItem('tc_token');localStorage.removeItem('tc_user');window.location.href='login.html';}
+    loadCourses();
+  </script>
+</body>
+</html>
